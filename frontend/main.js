@@ -1,5 +1,3 @@
-
-
 // Backend API base URL (always points to Render since backend is deployed there)
 const API_BASE = "https://book-my-ticket-hackathon.onrender.com";
 
@@ -7,10 +5,30 @@ const API_BASE = "https://book-my-ticket-hackathon.onrender.com";
 
 let seatMap = {};
 
+function showMessage(message) {
+  let messageEl = document.getElementById("message");
+
+  if (!messageEl) {
+    messageEl = document.createElement("div");
+    messageEl.id = "message";
+    messageEl.className = "text-center text-lg font-semibold my-4";
+    document.body.prepend(messageEl);
+  }
+
+  messageEl.textContent = message;
+}
+
+
 async function run() {
   const tbl = document.getElementById("tbl");
   tbl.innerHTML = "";
+   try {
   const res = await fetch(`${API_BASE}/seats`);
+
+  if (!res.ok) {
+    throw new Error("Failed to load seats");
+  }
+
   const resarray = await res.json();
   const j = resarray.sort((a, b) => a.id - b.id);
   let tr;
@@ -44,24 +62,31 @@ async function run() {
         const id = j[i].id;
         const name = prompt("Enter your name");
         if (!name) return;
-        const res = await fetch(`${API_BASE}/book/legacy/${id}/${name}`, { method: "PUT" });
-        const data = await res.json();
-        if (data.error) {
-          alert("FAILED! Couldn't book! already booked.");
-        } else {
-          alert("Booked successfully!");
-          // UI will be updated after booking
-        }
+       const res = await fetch(`${API_BASE}/book/legacy/${id}/${name}`, { method: "PUT" });
+
+if (!res.ok) {
+  showMessage("Unable to book this seat. Please try again.");
+  return;
+}
+
+const data = await res.json();
+
+if (data.error) {
+  showMessage("This seat has already been booked.");
+} else {
+  showMessage("Seat booked successfully!");
+}
       } catch (ex) {
-        alert("error booking " + ex);
+         showMessage("Unable to book this seat. Please try again.");
       }
     });
 
     tr.appendChild(td);
     tbl.appendChild(tr);
   }
+} catch (ex) {
+  showMessage("Unable to load seats. Please try again later.");
+}
 }
 
 run();
-
-
